@@ -3,47 +3,44 @@ name: Build and Upload APK
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: 17
 
-      - name: Download OpenCV SDK
+      - name: Grant permission to execute gradlew
+        run: chmod +x ./gradlew
+
+      - name: Download and Extract OpenCV Android SDK
         run: |
-          wget -O opencv.zip https://github.com/opencv/opencv/releases/download/4.9.0/opencv-4.9.0-android-sdk.zip
+          wget -O opencv.zip https://github.com/opencv/opencv/releases/download/4.5.5/opencv-4.5.5-android-sdk.zip
           unzip opencv.zip
-          mv OpenCV-android-sdk ./app/OpenCV-android-sdk
+          mv OpenCV-android-sdk $GITHUB_WORKSPACE/OpenCV-android-sdk
+          rm opencv.zip
+          echo "OpenCV SDK downloaded and placed in $GITHUB_WORKSPACE/OpenCV-android-sdk"
 
-      - name: Register OpenCV in settings.gradle
+      - name: Set OpenCV path in local.properties
         run: |
-          echo "include ':opencv'" >> settings.gradle
-          echo "project(':opencv').projectDir = new File('app/OpenCV-android-sdk/sdk/java')" >> settings.gradle
-
-      - name: Patch app/build.gradle to use OpenCV
-        run: |
-          echo "" >> app/build.gradle
-          echo "dependencies { implementation project(':opencv') }" >> app/build.gradle
-          echo "android { sourceSets { main { jniLibs.srcDirs = ['OpenCV-android-sdk/sdk/native/libs'] } } }" >> app/build.gradle
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "opencv.dir=$GITHUB_WORKSPACE/OpenCV-android-sdk/sdk" >> local.properties
+          cat local.properties
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
+          name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
