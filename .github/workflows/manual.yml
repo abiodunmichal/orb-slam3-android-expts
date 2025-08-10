@@ -22,6 +22,14 @@ jobs:
       - name: Grant permission to execute gradlew
         run: chmod +x ./gradlew
 
+      - name: Download and Extract OpenCV Android SDK
+        run: |
+          wget -O opencv.zip https://github.com/opencv/opencv/releases/download/4.5.5/opencv-4.5.5-android-sdk.zip
+          unzip opencv.zip
+          mv OpenCV-android-sdk app/OpenCV-android-sdk
+          rm opencv.zip
+          echo "OpenCV SDK downloaded and placed in app/OpenCV-android-sdk"
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
