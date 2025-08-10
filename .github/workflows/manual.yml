@@ -34,9 +34,10 @@ jobs:
         run: |
           wget -O opencv.zip https://github.com/opencv/opencv/releases/download/4.5.5/opencv-4.5.5-android-sdk.zip
           unzip opencv.zip
-          mv OpenCV-android-sdk $GITHUB_WORKSPACE/OpenCV-android-sdk
           rm opencv.zip
-          echo "OpenCV SDK downloaded and placed in $GITHUB_WORKSPACE/OpenCV-android-sdk"
+          # Rename extracted folder to avoid moving into itself error
+          mv OpenCV-android-sdk OpenCV-android-sdk-tmp
+          mv OpenCV-android-sdk-tmp/sdk OpenCV-android-sdk
 
       # Step 5: Grant permission to execute gradlew
       - name: Grant permission to execute gradlew
@@ -46,7 +47,7 @@ jobs:
       - name: Set OpenCV path in local.properties
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "opencv.dir=$GITHUB_WORKSPACE/OpenCV-android-sdk/sdk" >> local.properties
+          echo "opencv.dir=$GITHUB_WORKSPACE/OpenCV-android-sdk" >> local.properties
           cat local.properties
 
       # Step 7: Build Debug APK
