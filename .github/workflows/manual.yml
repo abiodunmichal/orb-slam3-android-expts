@@ -21,12 +21,16 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      # Step 3: Grant permission to execute gradlew
-      - name: Grant permission to execute gradlew
-        run: chmod +x ./gradlew
+      # Step 3: Cache OpenCV SDK
+      - name: Cache OpenCV Android SDK
+        uses: actions/cache@v3
+        with:
+          path: OpenCV-android-sdk
+          key: opencv-4.5.5-android-sdk
 
-      # Step 4: Download and Extract OpenCV Android SDK
+      # Step 4: Download and Extract OpenCV Android SDK (if not cached)
       - name: Download and Extract OpenCV Android SDK
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           wget -O opencv.zip https://github.com/opencv/opencv/releases/download/4.5.5/opencv-4.5.5-android-sdk.zip
           unzip opencv.zip
@@ -34,18 +38,22 @@ jobs:
           rm opencv.zip
           echo "OpenCV SDK downloaded and placed in $GITHUB_WORKSPACE/OpenCV-android-sdk"
 
-      # Step 5: Set paths in local.properties
+      # Step 5: Grant permission to execute gradlew
+      - name: Grant permission to execute gradlew
+        run: chmod +x ./gradlew
+
+      # Step 6: Set paths in local.properties
       - name: Set OpenCV path in local.properties
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "opencv.dir=$GITHUB_WORKSPACE/OpenCV-android-sdk/sdk" >> local.properties
           cat local.properties
 
-      # Step 6: Build Debug APK
+      # Step 7: Build Debug APK
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      # Step 7: Upload Debug APK as artifact
+      # Step 8: Upload Debug APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
